@@ -28,15 +28,13 @@ SOFTWARE.
 # Added soco to requirments.txt
 from adapt.intent import IntentBuilder
 from mycroft import MycroftSkill, intent_file_handler, intent_handler
-from mycroft.util.log import getLogger
+from mycroft.util.log import LOG
 import soco
 
 __author__ = 'fortwally'
 VOL_LOUD = 75
 VOL_MID = 50
 VOL_SOFT = 25
-
-LOGGER = getLogger(__name__)
 
 
 class SonosControl(MycroftSkill):
@@ -52,10 +50,10 @@ class SonosControl(MycroftSkill):
     def initialize(self):
         coord = self.findspeakers()
         if coord == "":
-            LOGGER.debug("Did not find any Sonos speakers")
+            LOG.debug("Did not find any Sonos speakers")
             self.speak_dialog("sonos.nospeaker")
             return
-        LOGGER.debug("Found Speakers")
+        LOG.debug("Found Speakers")
         self.need_speakers = False
         self.coordinator = coord  # the coordinator obj
 
@@ -71,11 +69,11 @@ class SonosControl(MycroftSkill):
             self.speak_dialog("sonos.nospeaker")
             return
         try:
-            LOGGER.debug("In Play Intent")
+            LOG.debug("In Play Intent")
             self.coordinator.play()
             self.speak_dialog("sonos.play")
         except Exception as e:
-            LOGGER.debug(e)
+            LOG.debug(e)
             pass
 
     # Pause whatever is playing.
@@ -85,11 +83,11 @@ class SonosControl(MycroftSkill):
             self.speak_dialog("sonos.nospeaker")
             return
         try:
-            LOGGER.debug("In Pause Intent")
+            LOG.debug("In Pause Intent")
             self.coordinator.pause()
             self.speak_dialog("sonos.pause")
         except Exception as e:
-            LOGGER.debug(e)
+            LOG.debug(e)
             # self.buildspeakers()
             pass
 
@@ -97,22 +95,23 @@ class SonosControl(MycroftSkill):
     @intent_handler(IntentBuilder("sonosskipintent").require("Sonos").require("skip"))
     def handle_sonos_skip_intent(self, message):
         try:
-            LOGGER.debug("In skip Intent")
+            LOG.debug("In skip Intent")
             self.coordinator.next()
             self.speak_dialog("sonos.skip")
         except Exception as e:
-            LOGGER.debug(e.message)
+            LOG.debug(e.message)
             self.speak("Can not skip what is playing")
 
     # Raise the volume of the speakers
     @intent_handler(IntentBuilder("sonosvolumeupintent").require("Sonos").require("Volume").require("Increase"))
     def handle_sonos_volume_up_intent(self, message):
         utt = message.data.get('utterance', '')
-        LOGGER.debug("utterance is: {}".format(utt))
-        # TODO change to language agnostic utterance
-        if 'loud' in utt.split():
+        LOG.debug("utterance is: {}".format(utt))
+        if utt and self.voc_match(utt, 'loud'):
+            LOG.debug('setting volume to: ' + str(VOL_LOUD))
             s = self.set_vol(VOL_LOUD, 0, True)
-        elif 'middle' in utt.split():
+        if utt and self.voc_match(utt, 'middle'):
+            LOG.debug('setting volume to: ' + str(VOL_MID))
             s = self.set_vol(VOL_MID, 0, True)
         else:
             s = self.set_vol(10, 0, False)
@@ -125,8 +124,9 @@ class SonosControl(MycroftSkill):
     @intent_handler(IntentBuilder("sonosvolumedownintent").require("Sonos").require("Volume").require("Decrease"))
     def handle_sonos_volume_down_intent(self, message):
         utt = message.data.get('utterance', '')
-        LOGGER.debug("utterance is: {}".format(utt))
-        if 'soft' in utt.split():
+        LOG.debug("utterance is: {}".format(utt))
+        if utt and self.voc_match(utt, 'soft'):
+            LOG.debug('setting volume to: ' + str(VOL_SOFT))
             s = self.set_vol(VOL_SOFT, 0, True)
         else:
             s = self.set_vol(0, 10, False)
@@ -168,8 +168,8 @@ class SonosControl(MycroftSkill):
         try:
             vol = self.volume
         except AttributeError as e:
-            LOGGER.error(e)
-            LOGGER.error('I probably cannot find any sonos speakers')
+            LOG.error(e)
+            LOG.error('I probably cannot find any sonos speakers')
             status = False
             return status
         status = True
@@ -186,7 +186,7 @@ class SonosControl(MycroftSkill):
                 self.members[sp].volume = v
 
             except Exception as e:
-                LOGGER.debug(e)
+                LOG.debug(e)
                 status = False
         return status
 

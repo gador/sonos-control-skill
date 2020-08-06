@@ -68,7 +68,7 @@ class SonosControl(MycroftSkill):
     @intent_handler(IntentBuilder("sonosplayintent").require("Sonos").require("play"))
     def handle_sonos_play_intent(self, message):
         if self.need_speakers:
-            self.speak_dialog("sonos.nospeakers")
+            self.speak_dialog("sonos.nospeaker")
             return
         try:
             LOGGER.debug("In Play Intent")
@@ -82,7 +82,7 @@ class SonosControl(MycroftSkill):
     @intent_handler(IntentBuilder("sonospauseintent").require("Sonos").require("pause"))
     def handle_sonos_pause_intent(self, message):
         if self.need_speakers:
-            self.speak_dialog("sonos.nospeakers")
+            self.speak_dialog("sonos.nospeaker")
             return
         try:
             LOGGER.debug("In Pause Intent")

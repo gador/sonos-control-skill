@@ -75,7 +75,7 @@ class SonosControl(MycroftSkill):
             self.coordinator.play()
             self.speak_dialog("sonos.play")
         except Exception as e:
-            LOGGER.debug(e.message)
+            LOGGER.debug(e)
             pass
 
     # Pause whatever is playing.
@@ -89,7 +89,7 @@ class SonosControl(MycroftSkill):
             self.coordinator.pause()
             self.speak_dialog("sonos.pause")
         except Exception as e:
-            LOGGER.debug(e.message)
+            LOGGER.debug(e)
             # self.buildspeakers()
             pass
 
@@ -109,6 +109,7 @@ class SonosControl(MycroftSkill):
     def handle_sonos_volume_up_intent(self, message):
         utt = message.data.get('utterance', '')
         LOGGER.debug("utterance is: {}".format(utt))
+        # TODO change to language agnostic utterance
         if 'loud' in utt.split():
             s = self.set_vol(VOL_LOUD, 0, True)
         elif 'middle' in utt.split():
@@ -164,7 +165,13 @@ class SonosControl(MycroftSkill):
         return coordinator
 
     def set_vol(self, up=0, down=0, fixed=False):
-        vol = self.volume
+        try:
+            vol = self.volume
+        except AttributeError as e:
+            LOGGER.error(e)
+            LOGGER.error('I probably cannot find any sonos speakers')
+            status = False
+            return status
         status = True
         for sp in self.members:
             v = vol[sp]
@@ -179,7 +186,7 @@ class SonosControl(MycroftSkill):
                 self.members[sp].volume = v
 
             except Exception as e:
-                LOGGER.debug(e.message)
+                LOGGER.debug(e)
                 status = False
         return status
 
